@@ -1,9 +1,12 @@
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 from datetime import datetime
-from utils import *
+from src.tools.utils import *
 import multiprocessing as mp
 import importlib
-import os
+
 
 def evaluate_model_wrapper(args):
     evaluate_model_func, module_name, result_folder = args
@@ -29,7 +32,7 @@ def evaluate_models_in_parallel(module_names, main_folder, evaluate_model_module
             result_folder = os.path.join(main_folder, f"{timestamp}_model_{i}")
             if not os.path.exists(result_folder):
                 os.makedirs(result_folder)
-            save_model_info_with_pybamm(module_name, result_folder)
+            save_model_info(module_name, result_folder)
             args_list.append((evaluate_model_func, module_name, result_folder))
         
         for result_folder, best_total_loss in pool.imap(evaluate_model_wrapper, args_list):
@@ -262,21 +265,21 @@ def nn_in_pybamm(X, H_prev, Ws):
 
 
     #   The available optimization methods are:
-    #   - `evaluate_model.ECM_gradient_descent`
-    #   - `evaluate_model.random_constant_heating`
-    #   - `evaluate_model.SAABO_constant_heating`
+    #   - `src.p2o.evaluate_model.ECM_gradient_descent`
+    #   - `src.p2o.evaluate_model.random_constant_heating`
+    #   - `src.p2o.evaluate_model.SAABO_constant_heating`
 
     # result_folders, results = evaluate_models_in_parallel(
     #     module_names=['network_1', 'network_2', 'network_3','network_4','network_5', 'network_6', 'network_7', 'network_8', 'network_9', 'network_10'], # The list of module names to evaluate
-    #     main_folder = 'Test_adaptive', # The main folder to save the results
-    #     evaluate_model_module='evaluate_model.SAABO_adaptive', # The module containing the evaluate_model function
+    #     main_folder = 'experiments/Test_adaptive', # The main folder to save the results
+    #     evaluate_model_module='src.p2o.evaluate_model.SAABO_adaptive', # The module containing the evaluate_model function
     #     num_workers=10
     #     )
 
     result_folders, results = evaluate_models_in_parallel(
-        module_names=['ac_seed1'], # The list of module names to evaluate
-        main_folder = 'Test_adaptive_RNN', # The main folder to save the results
-        evaluate_model_module='evaluate_model.SAABO_adaptive_RNN', # The module containing the evaluate_model function
+        module_names=['src.p2o.evaluation.ac_seed1'], # The list of module names to evaluate
+        main_folder = 'experiments/Test_adaptive_RNN', # The main folder to save the results
+        evaluate_model_module='src.p2o.evaluate_model.SAABO_adaptive_RNN', # The module containing the evaluate_model function
         num_workers=1
         )
 

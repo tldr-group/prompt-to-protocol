@@ -1,8 +1,11 @@
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 from datetime import datetime
-from utils import *
+from src.tools.utils import *
 import multiprocessing as mp
 import importlib
-import os
 import time
 import random
 
@@ -128,21 +131,23 @@ class NeuralNetwork(nn.Module):
 # ```
 #     """
     
-    extract_save_new_network_code(seed1_code, 'seed1.py')
-    # extract_save_new_network_code(seed2_code, 'seed2.py')
-    # extract_save_new_network_code(seed3_code, 'seed3.py')
+    # Save to src/p2o/evaluation/ directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    extract_save_new_network_code(seed1_code, os.path.join(script_dir, 'seed1.py'))
+    # extract_save_new_network_code(seed2_code, os.path.join(script_dir, 'seed2.py'))
+    # extract_save_new_network_code(seed3_code, os.path.join(script_dir, 'seed3.py'))
 
 
 #   The available optimization methods are:
-#   - `evaluate_model.ECM_gradient_descent`
-#   - `evaluate_model.random_constant_heating`
-#   - `evaluate_model.SAABO_constant_heating`
+#   - `src.p2o.evaluate_model.ECM_gradient_descent`
+#   - `src.p2o.evaluate_model.random_constant_heating`
+#   - `src.p2o.evaluate_model.SAABO_constant_heating`
 
     result_folders, results = evaluate_models_in_parallel(
-        module_names=['seed1'], 
-        main_folder = 'BO_case2_new2', # The main folder to save the results
-        evaluate_model_module='evaluate_model.SAABO_constant_heating', # The module containing the evaluate_model function
-        # evaluate_model_module='evaluate_model.random_constant_heating', # The module containing the evaluate_model function
+        module_names=['src.p2o.evaluation.seed1'], 
+        main_folder = 'experiments/BO_case2_new2', # The main folder to save the results
+        evaluate_model_module='src.p2o.evaluate_model.SAABO_constant_heating', # The module containing the evaluate_model function
+        # evaluate_model_module='src.p2o.evaluate_model.random_constant_heating', # The module containing the evaluate_model function
         num_workers=1,
         random_seeds=[110]  
         )

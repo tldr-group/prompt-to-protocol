@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import random
 import shutil
 import numpy as np
@@ -10,7 +13,7 @@ from deap import base, creator, tools
 from datetime import datetime
 from termcolor import colored
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from evaluate_model.ECM_gradient_descent import *
+from src.p2o.evaluate_model.ECM_gradient_descent import *
 
 # Activation functions
 activation_functions = [

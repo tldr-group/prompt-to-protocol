@@ -1,5 +1,9 @@
 import inspect
 import os
+import sys
+import importlib
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import torch
 import numpy as np
 import pandas as pd
@@ -7,10 +11,10 @@ from simulation import CustomSimulator, SimulationResults
 import csv
 import re
 from datetime import datetime
-from show_searching_space import show_searching_space
+from src.tools.show_searching_space import show_searching_space
 import multiprocessing as mp
 import time
-from utils import *
+from src.tools.utils import *
 
 class HeatLossMetric:
     def __init__(self, model=None, device=None, result_folder=None):
@@ -124,7 +128,7 @@ def evaluate_model(module_name, result_folder, random_seed=None):
         print(f"Starting evaluation for: {module_name} with true randomness (no fixed seed)")
     
     # Import the neural network module and set up the device
-    nn_module = __import__(module_name)
+    nn_module = importlib.import_module(module_name)
     NeuralNetwork = nn_module.NeuralNetwork
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

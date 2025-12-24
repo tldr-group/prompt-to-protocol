@@ -1,4 +1,8 @@
 import os
+import sys
+import importlib
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import torch
 import numpy as np
 import pandas as pd
@@ -8,12 +12,12 @@ from ax.core.objective import Objective
 from ax.core.optimization_config import OptimizationConfig
 from ax.modelbridge.registry import Models
 from ax.runners.synthetic import SyntheticRunner
-from simulation import CustomSimulator, SimulationResults
+from src.p2o.simulation.sim_p2o_c1_c2 import CustomSimulator, SimulationResults
 from ax.utils.common.result import Ok
 import csv
 import multiprocessing as mp
 
-from utils import *
+from src.tools.utils import *
 
 
 class HeatLossMetric(Metric):
@@ -156,7 +160,7 @@ def evaluate_model(module_name, result_folder, random_seed=None):
         print(f"Starting evaluation for: {module_name} with true randomness (no fixed seed)")
     
     # Import the neural network module and set up the device
-    nn_module = __import__(module_name)
+    nn_module = importlib.import_module(module_name)
     NeuralNetwork = nn_module.NeuralNetwork
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Model imported successfully.")

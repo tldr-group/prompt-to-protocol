@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import random
 import torch
 import torch.nn as nn
@@ -8,7 +11,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from evaluate_model.ECM_gradient_descent import *  # Ensure this module is accessible
+from src.p2o.evaluate_model.ECM_gradient_descent import *  # Ensure this module is accessible
 
 # Activation functions and their mappings
 activation_functions = [

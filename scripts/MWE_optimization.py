@@ -545,7 +545,7 @@ if __name__ == '__main__':
     # Run optimization with a fixed seed for reproducibility
     # Set random_seed=None for true randomness
     result_folder, best_loss = run_optimization(
-        result_folder="./MWE_results",
+        result_folder="./experiments/MWE_results",
         random_seed=42
     )
     

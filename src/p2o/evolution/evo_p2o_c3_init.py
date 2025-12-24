@@ -1,7 +1,10 @@
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import re
 import pandas as pd
-from ac_nn_generation_multiprocessing import generate_initialization
+from src.p2o.llm_generation.gen_p2o_c3 import generate_initialization
 from datetime import datetime
 import traceback
 
@@ -22,14 +25,17 @@ def extract_save_multi_network_code(response, out_dir):
     return extracted_blocks
 
 def initialize_pool_folder(continue_folder=None):
+    # Use experiments folder in project root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    experiments_dir = os.path.join(project_root, 'experiments')
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # 确定仿真结果目录
     if continue_folder:
-        simulation_folder = os.path.join(script_dir, continue_folder)
+        simulation_folder = os.path.join(experiments_dir, continue_folder)
         os.makedirs(simulation_folder, exist_ok=True)
     else:
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        simulation_folder = os.path.join(script_dir, f"Simulation_results_LLM_{current_time}")
+        simulation_folder = os.path.join(experiments_dir, f"Simulation_results_LLM_{current_time}")
         os.makedirs(simulation_folder, exist_ok=True)
 
     pool_loss_path = os.path.join(simulation_folder, 'pool_best_loss.csv')

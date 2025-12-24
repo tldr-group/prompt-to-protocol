@@ -44,7 +44,8 @@ _CODE_BLOCK_RE = re.compile(r"```(?:python)?\s*(.*?)\s*```", re.DOTALL | re.IGNO
 
 # Add timestamp to results directory to allow concurrent runs
 _TIMESTAMP = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-_RESULTS_DIR = Path(f"./Control_simulation_results_{_TIMESTAMP}")
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_RESULTS_DIR = _PROJECT_ROOT / "experiments" / f"Control_simulation_results_{_TIMESTAMP}"
 _RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 _GEN_LOG = _RESULTS_DIR / "generation_log.csv"
 

@@ -32,15 +32,15 @@ import torch
 from ax.core.metric import Metric
 
 import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from evaluate_model.ECM_gradient_descent import ECMLayer
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+from src.p2o.evaluate_model.ECM_gradient_descent import ECMLayer
 
 try:  # Optional dependency kept for legacy algorithms that still import pybamm
     import pybamm  # type: ignore
 except ImportError:
     pybamm = None
 
-from llm_generation_case1 import generate_initialization, generate_new_algorithm
+from src.p2p.llm_generation.gen_p2p_c1_c2 import generate_initialization, generate_new_algorithm
 
 # ───────────────────────── Global config ──────────────────────────
 _SEED = 42
@@ -64,7 +64,8 @@ if _env_dir:
     _RESULTS_DIR = Path(_env_dir)
 else:
     _TIMESTAMP = _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    _RESULTS_DIR = Path(f"./Control_simulation_results_case1cons_{_TIMESTAMP}").resolve()
+    _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+    _RESULTS_DIR = _PROJECT_ROOT / "experiments" / f"Control_simulation_results_case1cons_{_TIMESTAMP}"
     os.environ["CONTROL_RESULTS_DIR"] = str(_RESULTS_DIR)
 
 _RESULTS_DIR.mkdir(parents=True, exist_ok=True)

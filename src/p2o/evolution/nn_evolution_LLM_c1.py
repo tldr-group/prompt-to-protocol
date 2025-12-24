@@ -1,12 +1,13 @@
 import shutil
 import sys
-import pandas as pd
-from nn_evaluation import evaluate_models_in_parallel
-from nn_generation import generate_new_network
-from nn_generation_multiprocessing import generate_initialization
-import numpy as np
-from utils import *
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
+import pandas as pd
+from src.p2o.evaluation.eva_p2p_c1_c2 import evaluate_models_in_parallel
+from src.p2o.llm_generation.gen_p2o_c1 import generate_new_network, generate_initialization
+import numpy as np
+from src.tools.utils import *
 import random
 import traceback
 import pandas as pd
@@ -100,7 +101,7 @@ def choose_generation_function(parent1_loss, parent2_loss, pool_entropy):
 import os
 import pandas as pd
 from datetime import datetime
-from nn_evaluation import evaluate_models_in_parallel  
+from src.p2o.evaluation.eva_p2p_c1_c2 import evaluate_models_in_parallel  
 import shutil
 
 import os
@@ -111,11 +112,14 @@ import sys
 def initialize_pool_and_simulation_folders(iteration_index):
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Use experiments folder in project root
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    experiments_dir = os.path.join(project_root, 'experiments')
 
     # Create a Simulation_results folder with a timestamp
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     simulation_folder = os.path.join(
-        script_dir,
+        experiments_dir,
         f"Simulation_results_LLM_iter{iteration_index + 1:03d}_{current_time}"
     )
     os.makedirs(simulation_folder, exist_ok=True)

@@ -1,8 +1,12 @@
 import inspect
 import re
 import os
+import sys
+import importlib
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import torch.nn as nn
-from show_searching_space import show_searching_space
+from src.tools.show_searching_space import show_searching_space
 
 
 def extract_save_new_network_code(response, filename='nn_structure.py'):
@@ -35,7 +39,7 @@ def extract_save_multi_network_code(response, output_dir='.'):
     return extracted_blocks
 
 def save_model_info(module_name, result_folder, save_searching_space=True):
-    nn_module = __import__(module_name)
+    nn_module = importlib.import_module(module_name)
     NeuralNetwork = nn_module.NeuralNetwork
 
     model_code_file = os.path.join(result_folder, 'model_architecture.py')

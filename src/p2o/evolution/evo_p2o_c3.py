@@ -1,12 +1,14 @@
 import shutil
 import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import re
 import pandas as pd
-from ac_evaluation import evaluate_models_in_parallel
-from ac_nn_generation_multiprocessing import generate_initialization, generate_new_network
+from src.p2o.evaluation.eva_p2o_c3 import evaluate_models_in_parallel
+from src.p2o.llm_generation.gen_p2o_c3 import generate_initialization, generate_new_network
 import numpy as np 
-from utils import *
+from src.tools.utils import *
 import importlib
 import random
 import traceback

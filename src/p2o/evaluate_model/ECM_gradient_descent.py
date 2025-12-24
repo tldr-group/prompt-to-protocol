@@ -1,13 +1,17 @@
 import inspect
 import os
+import sys
+import importlib
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
 import torch
 import numpy as np
-from show_searching_space import show_searching_space
+from src.tools.show_searching_space import show_searching_space
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.nn as nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from utils import *
+from src.tools.utils import *
 from datetime import datetime
 import multiprocessing as mp
 import importlib
@@ -71,7 +75,7 @@ def evaluate_model(module_name, result_folder, random_seed=None):
     ecm_layer = ECMLayer().to(device)
     
     # Import the neural network module and set up the device
-    nn_module = __import__(module_name)
+    nn_module = importlib.import_module(module_name)
     NeuralNetwork = nn_module.NeuralNetwork
     net = NeuralNetwork().to(device)
 
@@ -305,7 +309,7 @@ class NeuralNetwork(nn.Module):
 
     result_folders, results = evaluate_models_in_parallel(
         module_names=['seed1'], 
-        main_folder = 'Try', # The main folder to save the results
+        main_folder = 'experiments/Try', # The main folder to save the results
         evaluate_model_module='evaluate_model.ECM_gradient_descent', # The module containing the evaluate_model function
         num_workers=1
         )

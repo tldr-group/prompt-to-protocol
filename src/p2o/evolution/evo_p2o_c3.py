@@ -226,7 +226,7 @@ def main(simulation_results_folder):
                     with open(new_file, 'w') as file:
                         file.write(new_code)
                     if isinstance(new_loss, (tuple, list, np.ndarray)):
-                        new_loss = float(new_loss[1])          # 或 new_loss[0]
+                        new_loss = float(new_loss[1])
 
                     new_entries.append({'File': new_file, 'Best_Total_Loss': new_loss})
                 except Exception as e:

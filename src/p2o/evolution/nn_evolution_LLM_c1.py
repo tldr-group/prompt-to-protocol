@@ -146,18 +146,17 @@ def initialize_pool_and_simulation_folders(iteration_index):
 
     network_files = [f"network_{i}.py" for i in range(1, 11)]
 
-    print(f"初始化新的 pool，迭代 {iteration_index + 1}")
+    print(f"Initializing new pool, iteration {iteration_index + 1}")
 
     try:
         response = generate_initialization()
-        print("生成网络代码成功。")
+        print("Network code generated successfully.")
 
-        # 提取并保存网络代码到 Pool_LLM 文件夹
         extract_save_multi_network_code(response, output_dir=pool_folder)
-        print("已保存网络代码到 Pool_LLM 文件夹。")
+        print("Saved network code to Pool_LLM folder.")
 
     except Exception as e:
-        print(f"初始化 pool 过程中出错: {e}")
+        print(f"Error during pool initialization: {e}")
         traceback.print_exc()
         raise
 
@@ -175,18 +174,14 @@ def initialize_pool_and_simulation_folders(iteration_index):
 
 
 def evaluate_undefined_models(pool_loss_path, pool_folder, simulation_folder):
-    # 读取 pool_best_loss.csv 文件
     df = pd.read_csv(pool_loss_path)
     clear_cache()
     
-    # 查找 loss 值为 NaN 或 inf 的网络，意味着它们尚未被评估
     undefined_loss = df['Best_Total_Loss'].isnull() | (df['Best_Total_Loss'] == float('inf'))
-
     models_to_evaluate = df[undefined_loss]['File'].tolist()
 
     if models_to_evaluate:
-        print(f"需要评估 {len(models_to_evaluate)} 个网络文件.")
-        # 获取没有扩展名的模块名称
+        print(f"Need to evaluate {len(models_to_evaluate)} network files.")
         module_names = [os.path.splitext(os.path.basename(f))[0] for f in models_to_evaluate]
 
         for original_file, module_name in zip(models_to_evaluate, module_names):
@@ -198,21 +193,21 @@ def evaluate_undefined_models(pool_loss_path, pool_folder, simulation_folder):
                     num_workers=1
                 )
             except Exception as e:
-                print(f"在评估网络 {original_file} 时发生错误: {e}")
+                print(f"Error evaluating network {original_file}: {e}")
                 traceback.print_exc()
                 idx = df.index[df['File'] == original_file].tolist()
                 if idx:
                     df = df.drop(idx[0]).reset_index(drop=True)
-                    print(f"已从池中移除出错的文件: {original_file}")
+                    print(f"Removed failed file from pool: {original_file}")
                 if os.path.exists(original_file):
                     try:
                         os.remove(original_file)
                     except Exception as rm_error:
-                        print(f"删除出错文件 {original_file} 时失败: {rm_error}")
+                        print(f"Failed to delete file {original_file}: {rm_error}")
                 continue
 
             if not new_result_folders or not new_nn_loss:
-                print(f"评估 {original_file} 未返回有效结果，将跳过。")
+                print(f"Evaluation of {original_file} returned no valid result, skipping.")
                 continue
 
             new_folder = new_result_folders[0]
@@ -220,23 +215,22 @@ def evaluate_undefined_models(pool_loss_path, pool_folder, simulation_folder):
             new_file_path = os.path.join(new_folder, "model_architecture.py")
 
             if os.path.exists(new_file_path):
-                print(f"更新文件路径: {new_file_path}，对应的损失值: {loss}")
+                print(f"Updating file path: {new_file_path}, loss: {loss}")
                 idx = df.index[df['File'] == original_file].tolist()
                 if idx:
                     df.loc[idx[0], 'File'] = new_file_path
                     df.loc[idx[0], 'Best_Total_Loss'] = loss
-                    print(f"文件 {new_file_path} 的损失值成功更新为 {loss}")
+                    print(f"Loss for {new_file_path} updated to {loss}")
                 else:
-                    print(f"文件路径 {original_file} 在 DataFrame 中找不到！")
+                    print(f"File path {original_file} not found in DataFrame!")
             else:
-                print(f"评估结果文件 {new_file_path} 不存在，将跳过。")
+                print(f"Result file {new_file_path} does not exist, skipping.")
 
         df.to_csv(pool_loss_path, index=False)
-        print(f"评估完成，并更新 {pool_loss_path} 中的 loss 值.")
+        print(f"Evaluation complete, updated loss values in {pool_loss_path}.")
     else:
-        print("没有需要评估的 loss 值，所有网络均已评估.")
+        print("No loss values need evaluation, all networks already evaluated.")
     
-    # 返回更新后的 DataFrame
     return df
 
 

@@ -29,7 +29,7 @@ def initialize_pool_folder(continue_folder=None):
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     experiments_dir = os.path.join(project_root, 'experiments')
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    # 确定仿真结果目录
+    # Determine simulation results directory
     if continue_folder:
         simulation_folder = os.path.join(experiments_dir, continue_folder)
         os.makedirs(simulation_folder, exist_ok=True)
@@ -45,10 +45,10 @@ def initialize_pool_folder(continue_folder=None):
     if not os.path.exists(pool_loss_path):
         try:
             response = generate_initialization()
-            # 直接用本文件里的函数，并指定输出目录为 Pool_LLM
+            # Use function from this file, output to Pool_LLM
             saved_files = extract_save_multi_network_code(response, pool_folder)
 
-            # 如果生成的 code 少于 10 个，下面这块会指向不存在的文件；这里用实际生成的文件列表
+            # Use actual generated file list
             initial = [{'File': fpath, 'Best_Total_Loss': float('inf')} for fpath in saved_files]
             pd.DataFrame(initial).to_csv(pool_loss_path, index=False)
             print(f"Initialization complete. Saved {len(saved_files)} files to {pool_folder}")

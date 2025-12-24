@@ -103,7 +103,7 @@ class MemoryMonitor:
         
         return True  # Return True indicating normal memory status
 
-# 创建全局内存监测器实例
+# Create global memory monitor instance
 memory_monitor = MemoryMonitor()
 
 import os, pickle, functools
@@ -114,10 +114,7 @@ import pybamm
 class BatteryCyclingExperiment:
     def __init__(self, num_cycles=30, SOC=0.9, adaptive_current=None, am_tem=308.15):
         """
-        关键改动：
-        - 增加 am_tem 形参，修正未定义变量 am_tem 的问题。
-        - 后续求解统一只在跨步骤/跨循环时传递“最后一步”的子解
-          (solution.sub_solutions[-1]) 作为 starting_solution，避免引用环。
+        Initialize battery cycling experiment.
         """
         pybamm.set_logging_level("ERROR")
 
@@ -267,7 +264,7 @@ class BatteryCyclingExperiment:
             if leftover_hours <= 0:
                 print("No leftover time for Part 2, skipping.")
                 self.steps += 1
-                # 不生成新解，直接复用 sol_1 的最后子解继续后续步骤
+                # Reuse sol_1's last sub-solution for subsequent steps
                 return sol_1, last_sub_from_part1
 
             i_charge_part2 = delta_Q / leftover_hours
@@ -289,7 +286,7 @@ class BatteryCyclingExperiment:
             )
             sim_2._esoh_solver = self.soh_solver
 
-            # 仅用 part1 的最后子解作为起点，避免整条解链进入引用环
+            # Use only part1's last sub-solution as starting point
             sol_2 = sim_2.solve(starting_solution=last_sub_from_part1)
             self.steps += 1
             last_sub2 = sol_2.sub_solutions[-1]
@@ -297,7 +294,7 @@ class BatteryCyclingExperiment:
         else:
             self.steps += 1
             print("The custom current in Part1 brought SoC > 90%, skipping Part2.")
-            # 如果跳过 part2，则延续 part1 的最后子解
+            # If skipping part2, continue with part1's last sub-solution
             return sol_1, last_sub_from_part1
 
     def steps_part3(self, prev_last_sub, rest_time):
@@ -321,7 +318,7 @@ class BatteryCyclingExperiment:
                 "For cycles greater than 100, please provide a valid path for checkpoint storage."
             )
 
-        prev_last_sub = None  # 仅传递最后一步的子解
+        prev_last_sub = None  # Only pass last step's sub-solution
         final_solution = None
         soh_values = []
 
@@ -366,16 +363,15 @@ class BatteryCyclingExperiment:
             soh_val = self.measure_soh_and_new_capacity(sol_2)
             soh_values.append(soh_val)
 
-            # 检查 SOH 是否低于 70%
-            # 原先当 SOH < 0.7 时停止实验，现暂时禁用以记录所有结果
+            # Check if SOH is below 70% (disabled to record all results)
             # if soh_val < 0.7:
             #     raise ValueError(
-            #         f"电池 SOH 已降至 {soh_val:.3f} ({soh_val*100:.1f}%)，低于 70% 阈值。"
-            #         f"在第 {cycle_index + 1} 个循环后停止实验。"
+            #         f"Battery SOH dropped to {soh_val:.3f} ({soh_val*100:.1f}%), below 70% threshold."
+            #         f"Stopping after cycle {cycle_index + 1}."
             #     )
             if soh_val < 0.7:
                 print(
-                    f"警告：SOH 降至 {soh_val:.3f} ({soh_val*100:.1f}%)，但继续运行以记录所有结果。"
+                    f"Warning: SOH dropped to {soh_val:.3f} ({soh_val*100:.1f}%), continuing to record all results."
                 )
 
             cycle_soc = sol_2["SoC"].data[-1]
@@ -408,10 +404,10 @@ class BatteryCyclingExperiment:
                 if metric is not None:
                     metric.h_prev = None
 
-            # 仅在循环间传递最后一步子解，避免整链引用
+            # Only pass last sub-solution between cycles
             prev_last_sub = last_sub3
 
-            # 释放大对象的引用（可选）
+            # Release large object references (optional)
             sol_1 = None
             sol_2 = None
             sol_3 = None
@@ -480,7 +476,7 @@ class BatteryExperimentRunner:
         self.terminal_soc = terminal_soc
         self.type_name = type_name
         self.num_cycles = num_cycles
-        self.h_prev = None  # 只在RNN模式下使用 
+        self.h_prev = None  # Only used in RNN mode
 
     def load_model(self):
         """
@@ -506,7 +502,7 @@ class BatteryExperimentRunner:
     
     def is_rnn_model(self):
         """
-        检测模型是否为RNN类型
+        Detect if model is RNN type
         Returns:
             bool: True if RNN (4 parameters), False if MLP (3 parameters)
         """
@@ -625,9 +621,8 @@ class BatteryExperimentRunner:
             pybamm.Scalar(10) * Tn,
             pybamm.Scalar(10) * Sn]
 
-        # 自动检测模型类型并调用相应的函数
+        # Auto-detect model type and call corresponding function
         if self_ref.is_rnn_model():  # RNN: (X, H_prev, Ws, bs)
-            # RNN模式：需要隐藏状态
             if self_ref.h_prev is None:
                 self_ref.h_prev = [pybamm.Scalar(0) for _ in range(len(Ws[0]))]
             
@@ -635,21 +630,18 @@ class BatteryExperimentRunner:
             self_ref.h_prev = h_t
             return y_t
         else:  # MLP: (X, Ws, bs)
-            # MLP模式：不需要隐藏状态
             return self_ref.nn_in_pybamm(X, Ws, bs)
     
 
     def make_pybamm_current(self, Ws, bs):
-        # 自动检测模型类型并初始化（仅RNN需要隐藏状态）
-        if self.is_rnn_model():  # RNN: 需要初始化隐藏状态
+        # Auto-detect model type and initialize (only RNN needs hidden state)
+        if self.is_rnn_model():
             if self.h_prev is None:
                 self.h_prev = [pybamm.Scalar(0) for _ in range(len(Ws[0]))]
-        # MLP不需要初始化隐藏状态
-
         from functools import partial
         return partial(
             self.adaptive_current_core,
-            self_ref=self,     # 把 self 也传进去，方便访问/修改 h_prev
+            self_ref=self,
             Ws=Ws,
             bs=bs,
         )
@@ -715,7 +707,7 @@ class BatteryExperimentRunner:
         if not os.path.exists(pth_file):
             raise FileNotFoundError(f"'{pth_file}' not found.")
 
-        # 过滤掉 loss 为 1e6 的记录
+        # Filter out records with loss = 1e6
         valid_rows_with_index = [
             (i, row) for i, row in enumerate(self.csv_rows)
             if float(row["total_loss"]) != 1e6
@@ -723,7 +715,7 @@ class BatteryExperimentRunner:
         if not valid_rows_with_index:
             raise ValueError("No valid rows with loss ≠ 1e6 found.")
 
-        # 排序并取 best, worst, middle
+        # Sort and get best, worst, middle
         rows_sorted = sorted(valid_rows_with_index, key=lambda x: float(x[1]["total_loss"]))
         keys = ["Best", "Worst", "Middle"]
         indices = [
@@ -753,7 +745,7 @@ class BatteryExperimentRunner:
                         index, case_name,
                         t_start=0, t_end=7200, num_points=1000
                     )
-                # 提取全部周期的数据
+                # Extract all cycle data
                 t = sol["Time [s]"].data
                 I = sol["Current [A]"].data
                 V = sol["Voltage [V]"].data
@@ -765,38 +757,37 @@ class BatteryExperimentRunner:
             except Exception as e:
                 print(f"Error in {case_name}: {e}")
 
-        # 运行三种 case
+        # Run three cases
         for key, idx in zip(keys, indices):
             safe_run_experiment(idx, key)
 
-        # —— 以下为新增：切出第二圈数据 —— #
+        # Extract second cycle data
         for case_name, (t, I, V, soc, T) in simulation_data.items():
-            # 找 boundary：第一个从 ≤0 跳到 >0 的索引
+            # Find boundary: first index where current goes from <=0 to >0
             flip_idxs = np.where((I[:-1] <= 0) & (I[1:] > 0))[0]
             if flip_idxs.size == 0:
-                raise RuntimeError(f"{case_name}: 未找到 ≤0→>0 跳变，无法切分第二圈")
+                raise RuntimeError(f"{case_name}: No <=0 to >0 transition found")
             boundary = flip_idxs[0] + 1
 
-            # 安全检查
             if boundary >= len(t):
-                raise RuntimeError(f"{case_name}: 跳变索引 {boundary} 超出数组长度 {len(t)}")
+                raise RuntimeError(f"{case_name}: Boundary index {boundary} exceeds array length {len(t)}")
 
-            # 切片：从 boundary 到末尾即第二圈
-            t2   = t[boundary:]   - t[boundary]    # 可选：时间重置为从0开始
+            # Slice from boundary to end (second cycle)
+            t2   = t[boundary:]   - t[boundary]
             I2   = I[boundary:]
             V2   = V[boundary:]
             soc2 = soc[boundary:]
             T2   = T[boundary:]
             soh2 = all_sohs[case_name][boundary:]
 
-            # 覆盖原数据
+            # Override original data
             simulation_data[case_name] = (t2, I2, V2, soc2, T2)
             all_sohs[case_name] = soh2
 
-        # 绘制汇总 SOH 曲线（如果需要）
+        # Plot aggregate SOH curves
         self.plot_aggregate_soh(all_sohs)
 
-        # 合并返回
+        # Combine and return
         combined_data = {
             case_name: {
                 "simulation_data": simulation_data[case_name],
@@ -915,24 +906,21 @@ from matplotlib.colors import ListedColormap
 
 def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_data, terminal_soc=0., type='nn',custom_colors=None):
     """
-    绘制电流、电压、SoC、温度四张子图，并根据 loss 值从深蓝到浅蓝为每个 case 分配颜色。
-    使用 inset_axes 创建一个小型 colorbar，显示排序后的 SoH 值（反推自 loss）。
+    Plot current, voltage, SoC, temperature subplots with color-coded loss values.
     """
-    # 1. 根据 loss 值排序：loss 较低的在前（表现好）
-    sorted_cases = sorted(combined_loss_data, key=combined_loss_data.get)  # 例如：['case1_Best', 'case2_Best', 'case1_Middle', ...]
+    # 1. Sort by loss value (lower loss = better performance)
+    sorted_cases = sorted(combined_loss_data, key=combined_loss_data.get)
     n = len(sorted_cases)
 
     base_colors = ["#0747a1", "#cce6ff"]  
     cmap = LinearSegmentedColormap.from_list("custom_blue", base_colors, N=n)
 
-    # 2. 如果没有传入 custom_colors，则按默认逻辑生成
+    # 2. Generate default colors if not provided
     if custom_colors is None:
-
-        # 分配颜色
         colors = {}
         for i, case in enumerate(sorted_cases):
             if i == 0:
-                colors[case] = "#043178"  # 第一名颜色单独加深
+                colors[case] = "#043178"  # Darker color for best case
             else:
                 colors[case] = mcolors.to_hex(cmap(i / (n - 1)))
 
@@ -942,26 +930,26 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
     
     color_list = [colors[case] for case in sorted_cases]
     
-    # 4. 建立 4 个子图（电流、电压、SoC、温度）
+    # 4. Create 4 subplots (current, voltage, SoC, temperature)
     fig, axes = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(6, 10))
     ax_current, ax_voltage, ax_soc, ax_temp = axes
 
-    # 5. 添加参考线
+    # 5. Add reference lines
     ax_current.axhline(0, linestyle="--", linewidth=1, color="gray")
     ax_voltage.axhline(4.2, linestyle="--", linewidth=1, color="gray")
     ax_voltage.axhline(3.0, linestyle="--", linewidth=1, color="gray")
     ax_soc.axhline(terminal_soc, linestyle="--", linewidth=1, color="gray")
     ax_soc.axhline(0.0, linestyle="--", linewidth=1, color="gray")
-    ax_temp.axhline(am_tem, linestyle="--", linewidth=1, color="gray")  # 常温参考线
+    ax_temp.axhline(am_tem, linestyle="--", linewidth=1, color="gray")  # Ambient temperature reference
     
-    # 6. 假设所有 case 共享相同的时间间隔（从任意一個 case 中取样）
+    # 6. Assume all cases share same time interval
     # sample_case = next(iter(combined_simulation_data.values()))
     sample_case = list(combined_simulation_data.values())[-1]
 
     t_common, I_common = sample_case[0], sample_case[1]
     t_common_in_hours = t_common / 3600
 
-    # 7. 确定充电/放电区域（示例：当电流小于 -0.01 为充电区域）
+    # 7. Determine charging/discharging regions (current < -0.01 = charging)
     charge_regions = I_common < -0.01
     def find_regions(condition):
         regions = []
@@ -981,49 +969,49 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
     charging_intervals_in_hours = [(start/3600, end/3600) for (start, end) in charging_intervals]
     discharging_intervals_in_hours = [(start/3600, end/3600) for (start, end) in discharging_intervals]
 
-    # ---------- 生成灰色休息区间 + 画背景阴影（完整替换版） ----------
-    fixed_len = 0.5      # 黄色区长度（小时）
+    # Generate rest intervals and draw background shading
+    fixed_len = 0.5      # Yellow region length (hours)
     rest_intervals_in_hours = []
     timeline_end = t_common_in_hours[-1]
 
-    # ① 获取第一次充电（黄色）开始时间
+    # Get first charging (yellow) start time
     if charging_intervals_in_hours:
         first_charge_start = charging_intervals_in_hours[0][0]
 
-        # ② 保留第一次放电 [放电起点  → 黄色开始] 这一段灰色
+        # Keep first discharge region as gray
         first_discharge_start, _ = discharging_intervals_in_hours[0]
         if first_discharge_start < first_charge_start:
             rest_intervals_in_hours.append(
                 (first_discharge_start, first_charge_start)
             )
 
-        # ③ 其余灰色区：从 (黄色结束点) 开始 → 下一段充电 or 整段曲线结束
+        # Other gray regions: from yellow end to next charging or timeline end
         for i, (c_start, _) in enumerate(charging_intervals_in_hours):
-            rest_start = c_start + fixed_len        # 黄色段结束点
+            rest_start = c_start + fixed_len        # Yellow region end point
             rest_end = (charging_intervals_in_hours[i+1][0]
                         if i < len(charging_intervals_in_hours) - 1
                         else timeline_end)
             rest_intervals_in_hours.append((rest_start, rest_end))
 
-    # ---------- 画背景阴影 ----------
-    # 黄色：每段充电起点 → 起点 + 2 h
+    # Draw background shading
+    # Yellow: charging start to start + fixed_len
     for interval in charging_intervals_in_hours:
         new_end = interval[0] + fixed_len
         for ax in axes:
             ax.axvspan(interval[0], new_end, color="#eddca5", alpha=0.3)
 
-    # 灰色：用我们刚刚算好的 rest_intervals_in_hours
+    # Gray: use calculated rest_intervals_in_hours
     for interval in rest_intervals_in_hours:
-        # 跳过无效（负宽度）区间
+        # Skip invalid (negative width) intervals
         if interval[1] > interval[0]:
             for ax in axes:
                 ax.axvspan(*interval, color="lightgray", alpha=0.3)
     # -----------------------------------------------------------------
 
 
-    # 9. 绘制每个 case 的曲线，使用分配的颜色
+    # 9. Plot curves for each case with assigned colors
     for case, data in combined_simulation_data.items():
-        t, I, V, soc, T = data  # data 应为 (t, I, V, soc, T)
+        t, I, V, soc, T = data
         t_in_hours = t / 3600
         color = colors.get(case, "black")
         ax_current.plot(t_in_hours, I, linestyle="-", color=color, 
@@ -1032,7 +1020,7 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
         ax_soc.plot(t_in_hours, soc, linestyle="-", color=color, alpha=0.8)
         ax_temp.plot(t_in_hours, T, linestyle="-", color=color, alpha=0.8)
 
-    # 10. 添加各子图的辅助文字
+    # 10. Add helper text to subplots
     ax_current.text(0.72, 0.8, 'Charging', transform=ax_current.transAxes, fontsize=11, color='gray', alpha=0.6)
     ax_current.text(0.22, 0.8, 'Discharging', transform=ax_current.transAxes, fontsize=11, color='gray', alpha=0.6)
     # ax_current.text(0.85, 0.8, 'Rest', transform=ax_current.transAxes, fontsize=11, color='gray', alpha=0.6)
@@ -1042,7 +1030,7 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
     ax_soc.text(t_common_in_hours[-1]*0.95, 0, '0% SoC', va='bottom', ha='right', fontsize=10, color='gray')
     ax_temp.text(t_common_in_hours[-1]*0.95, am_tem, f'{am_tem}K', va='bottom', ha='right', fontsize=10, color='gray')
 
-    # 11. 添加示意箭头（根据需要调整）
+    # 11. Add annotation arrows
     if charging_intervals_in_hours:
         start_yellow = charging_intervals_in_hours[0][0]
         fixed_end = start_yellow + fixed_len
@@ -1058,7 +1046,7 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
             ha='center', va='bottom', fontsize=8, color='black'
         )
 
-    # 12. 设置标题与坐标轴标签
+    # 12. Set title and axis labels
     if type == 'nn':
         fig.suptitle("Battery Protocols Optimized by Neural Network Based on SOH", fontsize=11, fontweight='bold', ha='center')
     else:
@@ -1069,28 +1057,27 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
     ax_temp.set_ylabel("Temperature [K]")
     ax_temp.set_xlabel("Time [h]")
     
-    # 13. 创建一个小型的 inset colorbar，用于表示从深色到浅色对应的 SoH（反推自 loss）
+    # 13. Create small inset colorbar for SoH (derived from loss)
     norm = mpl.colors.Normalize(vmin=0, vmax=1)
     sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
 
-    # 在 ax_current 内创建一个小的 colorbar 区域，放在左下角
+    # Create small colorbar region in ax_current (lower left)
     cax = inset_axes(ax_current, width="38%", height="3%", loc='lower left', borderpad=3)
     cbar = plt.colorbar(sm, cax=cax, orientation='horizontal')
     
-    # 计算 colorbar 上各刻度对应的实际 SoH 值
-    # 对应公式: SoH = 0.93 + 0.07 * exp(-loss)
+    # Calculate SoH values for colorbar ticks
+    # Formula: SoH = 0.93 + 0.07 * exp(-loss)
     cmap_discrete = ListedColormap(color_list)
 
-    # 4) 再创建 ScalarMappable，让 colorbar 使用这个离散色卡
-    norm = mpl.colors.Normalize(vmin=0, vmax=n - 1)  # 或者 0~1，看你想怎么刻度
+    # 4) Create ScalarMappable with discrete colormap
+    norm = mpl.colors.Normalize(vmin=0, vmax=n - 1)
     sm = mpl.cm.ScalarMappable(cmap=cmap_discrete, norm=norm)
     sm.set_array([])
 
-    # 5) 绘制 colorbar
+    # 5) Draw colorbar
     cbar = plt.colorbar(sm, cax=cax, orientation='horizontal')
-    cbar.set_ticks(range(n))  # 离散刻度
-    # 假设你想把 SoH 值对应到每一个 case 上
+    cbar.set_ticks(range(n))
     soh_values_sorted = [0.93 + 0.07 * np.exp(-combined_loss_data[case]) for case in sorted_cases]
     soh_loss = (1 - np.array(soh_values_sorted))*100
     # cbar.set_ticklabels([f"{val:.3f}" for val in soh_values_sorted])
@@ -1099,7 +1086,7 @@ def plot_protocol_with_loss(save_path, combined_simulation_data, combined_loss_d
     cbar.set_label("SoH Reduction %", fontsize=8)
     cbar.ax.tick_params(labelsize=6)
     
-    # 14. 调整布局、保存并显示图像
+    # 14. Adjust layout, save and display
     fig.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.show()
@@ -1324,11 +1311,11 @@ if __name__ == "__main__":
 
 #         return adaptive_current
 
-#     # 1) 创建或加载 PyTorch 网络
-#     net = MyNet()                 # 或 net = torch.load("net.pt")
+#     # 1) Create or load PyTorch network
+#     net = MyNet()
 #     net.eval()
 
-#     # 2) 提取全连接层权重 & 偏置（顺序 = forward 顺序）
+#     # 2) Extract FC layer weights & biases (in forward order)
 #     def get_fc_weights(model: nn.Module):
 #         """Return (Ws, bs) lists for *all* nn.Linear layers in *forward order*.
 
@@ -1351,11 +1338,11 @@ if __name__ == "__main__":
 #                         bs.append(mod.bias.detach().cpu().numpy())
 #         return Ws, bs
 
-#     # 3) 得到自适应电流函数
+#     # 3) Get adaptive current function
 #     Ws, bs = get_fc_weights(net)
 #     adaptive_current = make_pybamm_current(Ws, bs)
 
-#     # 4) 组装 PyBaMM 实验
+#     # 4) Assemble PyBaMM experiment
 
 #     experiment = BatteryCyclingExperiment(num_cycles=100, SOC = 0.8, adaptive_current=adaptive_current)
 #     final_solution, soh_values = experiment.run_cycles(path='TEST')

@@ -133,7 +133,7 @@ class TotalLossMetric(Metric):
     
     def is_rnn_model(self):
         """
-        检测模型是否为RNN类型
+        Detect if model is RNN type.
         Returns:
             bool: True if RNN (4 parameters), False if MLP (3 parameters)
         """
@@ -155,9 +155,8 @@ class TotalLossMetric(Metric):
             pybamm.Scalar(10) * Tn,
             pybamm.Scalar(10) * Sn]
 
-        # 自动检测模型类型并调用相应的函数
+        # Auto-detect model type and call corresponding function
         if self_ref.is_rnn_model():  # RNN: (X, H_prev, Ws, bs)
-            # RNN模式：需要隐藏状态
             if self_ref.h_prev is None:
                 self_ref.h_prev = [pybamm.Scalar(0) for _ in range(len(Ws[0]))]
             
@@ -165,21 +164,19 @@ class TotalLossMetric(Metric):
             self_ref.h_prev = h_t
             return y_t
         else:  # MLP: (X, Ws, bs)
-            # MLP模式：不需要隐藏状态
             return self_ref.nn_in_pybamm(X, Ws, bs)
     
 
     def make_pybamm_current(self, Ws, bs):
-        # 自动检测模型类型并初始化（仅RNN需要隐藏状态）
-        if self.is_rnn_model():  # RNN: 需要初始化隐藏状态
+        # Auto-detect model type and initialize (only RNN needs hidden state)
+        if self.is_rnn_model():
             if self.h_prev is None:
                 self.h_prev = [pybamm.Scalar(0) for _ in range(len(Ws[0]))]
-        # MLP不需要初始化隐藏状态
 
         from functools import partial
         return partial(
             self.adaptive_current_core,
-            self_ref=self,     # 把 self 也传进去，方便访问/修改 h_prev
+            self_ref=self,
             Ws=Ws,
             bs=bs,
         )

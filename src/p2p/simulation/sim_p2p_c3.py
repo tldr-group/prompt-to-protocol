@@ -100,7 +100,7 @@ class MemoryMonitor:
         
         return True  # Return True indicating normal memory status
 
-# 创建全局内存监测器实例
+# Create global memory monitor instance
 memory_monitor = MemoryMonitor()
 
 class BatteryCyclingExperiment:

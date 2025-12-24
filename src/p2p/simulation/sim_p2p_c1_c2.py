@@ -610,13 +610,13 @@ def __main__():
         i = -5 * pybamm.tanh(i_mag / 5)
         return i
 
-    # 使用 PyBaMMSimulator 的字典形式来传递电流函数
+    # Use PyBaMMSimulator dict format to pass current function
     current_func = current_function()
     t_values = np.linspace(0, 3600, 1000)
     
     print(f"Current function: {current_func}")
 
-    # 直接使用 PyBaMMSimulator 而不是 CustomSimulator
+    # Use PyBaMMSimulator directly instead of CustomSimulator
     simulator = PyBaMMSimulator()
     
     steps = [{'current_function': current_func, 'time_evals': t_values, 'termination_voltage': 4.2}]

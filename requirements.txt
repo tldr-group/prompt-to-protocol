@@ -1,0 +1,10 @@
+ax_platform==0.4.0
+deap==1.4.1
+matplotlib==3.8.2
+numpy<2
+openai==1.51.2
+optuna==4.0.0
+pandas==2.2.3
+pybamm==24.1
+scipy==1.14.1
+termcolor==2.5.0

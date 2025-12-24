@@ -21,7 +21,7 @@ cd prompt-to-protocol
 2. Create a virtual environment:
 
 ```bash
-conda create -n charging python=3.10
+conda create -n charging python=3.12.3
 conda activate charging
 ```
 

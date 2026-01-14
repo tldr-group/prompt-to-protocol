@@ -137,37 +137,7 @@ Below is an exmple and template for each network:
     return -pybamm.Scalar(I_scale) * y -3
     ```
 
-    # Neural Network 3
-    ```python
-    ```
-
-    # Neural Network 4
-    ```python
-    ```
-
-    # Neural Network 5
-    ```python
-    ```
-
-    # Neural Network 6
-    ```python
-    ```
-
-    # Neural Network 7
-    ```python
-    ```
-
-    # Neural Network 8
-    ```python
-    ```
-
-    # Neural Network 9
-    ```python
-    ```
-
-    # Neural Network 10
-    ```python
-    ```
+    Repeat this pattern for 10 different networks.
 
     Make sure every Python code block is enclosed by matching triple backticks: use python to open and to close each block
     """
@@ -222,9 +192,6 @@ def generate_new_network(seed1_code, seed2_code):
 
     4. Layer Configuration:
     - Consider different architectures, MLP/RNN/LSTM/etc.
-    - Number of hidden layers should range between 0 and 3.
-    - Number of neurons per hidden layer should be between 1 and 4.
-    - Use LayerNorm (without learnable affine parameters).
     - Do not use dropout layers.
     - Vary activation functions (e.g., ReLU, LeakyReLU, ELU, Tanh, etc.).
     - You may include residual (skip) connections.

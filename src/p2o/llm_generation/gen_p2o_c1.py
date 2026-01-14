@@ -95,7 +95,6 @@ Number of layers should range between 0 and 3.
 Neurons in each layer should be between 1 and 4.
 Consider use different activation functions.
 Do not use dropout layers.
-Use Batch normalization layers.
 5. Network Naming:
 Each generated class should be named NeuralNetwork. When creating instances of these classes, the name NeuralNetwork should always be used.
 Below is a template for each network:

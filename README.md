@@ -1,6 +1,6 @@
 # Prompt-to-Protocol
 
-A framework for optimizing battery charging protocols using neural networks and Bayesian optimization (SAASBO).
+From Prompt to Protocol: Fast Charging Batteries with Large Language Models
 
 ## Environment Setup
 
@@ -27,7 +27,7 @@ conda activate charging
 
 3. Install dependencies:
 
-**For Case 1 & Case 2 (Constant Heating Optimization):**
+**For Case 1 & Case 2 (Constant / Predefined Heating Optimization):**
 
 ```bash
 pip install -r requirements.txt
@@ -46,7 +46,7 @@ pip install pybamm==25.1.1
 
 ### API Key Configuration
 
-For LLM-based network generation, you need to configure your OpenAI API key:
+For LLM-based optimization, you need to configure your OpenAI API key:
 
 **Option 1: Using a `.env` file (Recommended)**
 

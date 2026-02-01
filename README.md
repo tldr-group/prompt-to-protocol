@@ -44,6 +44,30 @@ pip install pybamm==25.1.1
 
 > Note: Case 3 requires `pybamm==25.1.1` due to API changes in PyBaMM
 
+### API Key Configuration
+
+For LLM-based network generation, you need to configure your OpenAI API key:
+
+**Option 1: Using a `.env` file (Recommended)**
+
+1. Create a `.env` file in the project root:
+
+```bash
+touch .env
+```
+
+2. Add your API key to the `.env` file:
+
+```
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+3. Load the environment variables before running scripts:
+
+```bash
+source .env
+```
+
 ## Quick Start: Running MWE (Minimum Working Example)
 
 The `scripts/` directory contains self-contained examples that you can run directly:
@@ -68,7 +92,7 @@ This will:
 - Initialize a neural network for charging current control
 - Run 30 Sobol initialization trials
 - Run 60 batches of SAASBO optimization (3 samples per batch)
-- Save results to `./MWE_results/`
+- Save results to `./experiments/MWE_results/`
 
 ## Project Structure
 

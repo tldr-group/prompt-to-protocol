@@ -81,73 +81,14 @@ class NeuralNetwork(nn.Module):
 ```
     """
 
-#     seed2_code = """
-# ```python
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-
-
-# class NeuralNetwork(nn.Module):
-#     def __init__(self):
-#         super(NeuralNetwork, self).__init__()
-#         self.fc1 = nn.Linear(1, 3, bias=False)
-#         self.bn1 = nn.BatchNorm1d(3)
-#         self.fc2 = nn.Linear(3, 1, bias=False)
-        
-#     def forward(self, input):
-#         x = self.fc1(input)
-#         x = self.bn1(x)  # Batch normalization
-#         x = torch.relu(x)  # Using ReLU activation function
-#         x = self.fc2(x)
-#         output = torch.sigmoid(x) * 5  # Scale output to range [0, 10]
-#         return output
-
-# ```
-# #     """
-
-#     seed3_code = """
-# ```python
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-
-
-# class NeuralNetwork(nn.Module):
-#     def __init__(self):
-#         super(NeuralNetwork, self).__init__()
-#         self.fc1 = nn.Linear(1, 3, bias=False)
-#         self.bn1 = nn.BatchNorm1d(3)
-#         self.fc2 = nn.Linear(3, 1, bias=False)
-        
-#     def forward(self, input):
-#         x = self.fc1(input)
-#         x = self.bn1(x)  # Batch normalization
-#         x = torch.relu(x)  # Using ReLU activation function
-#         x = self.fc2(x)
-#         output = torch.sigmoid(x) * 5  # Scale output to range [0, 10]
-#         return output
-
-# ```
-#     """
-    
     # Save to src/p2o/evaluation/ directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     extract_save_new_network_code(seed1_code, os.path.join(script_dir, 'seed1.py'))
-    # extract_save_new_network_code(seed2_code, os.path.join(script_dir, 'seed2.py'))
-    # extract_save_new_network_code(seed3_code, os.path.join(script_dir, 'seed3.py'))
-
-
-#   The available optimization methods are:
-#   - `src.p2o.evaluate_model.ECM_gradient_descent`
-#   - `src.p2o.evaluate_model.random_constant_heating`
-#   - `src.p2o.evaluate_model.SAABO_constant_heating`
 
     result_folders, results = evaluate_models_in_parallel(
         module_names=['src.p2o.evaluation.seed1'], 
-        main_folder = 'experiments/BO_case2_new2', # The main folder to save the results
+        main_folder = 'experiments/BO_TEST', # The main folder to save the results
         evaluate_model_module='src.p2o.evaluate_model.SAABO_constant_heating', # The module containing the evaluate_model function
-        # evaluate_model_module='src.p2o.evaluate_model.random_constant_heating', # The module containing the evaluate_model function
         num_workers=1,
         random_seeds=[110]  
         )

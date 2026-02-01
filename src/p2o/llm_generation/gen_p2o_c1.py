@@ -139,3 +139,128 @@ Below is a template for each network:
 
     print(response)
     return response
+
+
+# Example usage:
+if __name__ == "__main__":
+    import torch
+    import torch.nn as nn
+    
+    print("=" * 60)
+    print("LLM Network Generation - Test Mode")
+    print("=" * 60)
+    
+    # ========== Test Mode: Check if OpenAI API is configured ==========
+    
+    # Check if API key is set
+    api_key = os.getenv("OPENAI_API_KEY")
+    
+    if api_key:
+        print(f"\n✓ OpenAI API key is configured (length: {len(api_key)} chars)")
+        print("\nYou can run the actual generation functions:")
+        print("  - generate_initialization(): Generate 10 initial network structures")
+        print("  - generate_new_network(seed1, seed2): Generate new network from two seeds")
+    else:
+        print("\n✗ OpenAI API key is NOT configured")
+        print("  Set it with: export OPENAI_API_KEY='your-api-key'")
+    
+    # ========== Test Example Network Structures ==========
+    print("\n" + "-" * 60)
+    print("Testing example neural network structures...")
+    print("-" * 60)
+    
+    # Example seed network 1
+    class SeedNetwork1(nn.Module):
+        def __init__(self):
+            super(SeedNetwork1, self).__init__()
+            self.fc1 = nn.Linear(1, 4)
+            self.fc2 = nn.Linear(4, 1)
+        
+        def forward(self, x):
+            x = torch.relu(self.fc1(x))
+            x = torch.sigmoid(self.fc2(x)) * 10
+            return x
+    
+    # Example seed network 2
+    class SeedNetwork2(nn.Module):
+        def __init__(self):
+            super(SeedNetwork2, self).__init__()
+            self.fc1 = nn.Linear(1, 3)
+            self.fc2 = nn.Linear(3, 2)
+            self.fc3 = nn.Linear(2, 1)
+        
+        def forward(self, x):
+            x = torch.tanh(self.fc1(x))
+            x = torch.relu(self.fc2(x))
+            x = torch.sigmoid(self.fc3(x)) * 10
+            return x
+    
+    # Test seed networks
+    net1 = SeedNetwork1()
+    net2 = SeedNetwork2()
+    
+    # Count parameters
+    def count_parameters(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    print(f"\nSeed Network 1:")
+    print(f"  Structure: 1 -> 4 -> 1")
+    print(f"  Parameters: {count_parameters(net1)}")
+    
+    print(f"\nSeed Network 2:")
+    print(f"  Structure: 1 -> 3 -> 2 -> 1")
+    print(f"  Parameters: {count_parameters(net2)}")
+    
+    # Test forward pass
+    test_input = torch.tensor([[0.5]])
+    
+    try:
+        output1 = net1(test_input)
+        output2 = net2(test_input)
+        
+        print(f"\nForward pass test:")
+        print(f"  Input: {test_input.item():.4f}")
+        print(f"  SeedNetwork1 output: {output1.item():.4f}")
+        print(f"  SeedNetwork2 output: {output2.item():.4f}")
+        
+        # Verify output range [0, 10]
+        assert 0 <= output1.item() <= 10, "Output1 out of range!"
+        assert 0 <= output2.item() <= 10, "Output2 out of range!"
+        
+        print("\n" + "=" * 60)
+        print("TEST PASSED - Network structures are valid!")
+        print("=" * 60)
+        
+    except Exception as e:
+        print("\n" + "=" * 60)
+        print("TEST FAILED - Error occurred!")
+        print("=" * 60)
+        print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # ========== Optional: Run actual LLM generation ==========
+    print("\n" + "-" * 60)
+    print("Optional: Run LLM generation")
+    print("-" * 60)
+    
+    run_llm_test = False  # Set to True to test actual LLM generation
+    
+    if run_llm_test and api_key:
+        print("\nRunning generate_initialization()...")
+        try:
+            response = generate_initialization()
+            print(f"\nGenerated response length: {len(response)} chars")
+            print("LLM generation test completed!")
+        except Exception as e:
+            print(f"LLM generation failed: {e}")
+    else:
+        if not api_key:
+            print("\nSkipping LLM test (no API key)")
+        else:
+            print("\nSkipping LLM test (set run_llm_test=True to enable)")
+    
+    print("\n" + "=" * 60)
+    print("Test finished.")
+    print("=" * 60)
+

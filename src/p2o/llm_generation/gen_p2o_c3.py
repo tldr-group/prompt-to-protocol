@@ -303,5 +303,181 @@ class NeuralNetwork(nn.Module):
 ```
     """
 
-    new_code = generate_new_network(seed1_code, seed2_code)
-    print(new_code)
+    # ========== Test Mode: Check if OpenAI API is configured ==========
+    print("=" * 60)
+    print("LLM Network Generation (Case 3) - Test Mode")
+    print("=" * 60)
+    
+    # Check if API key is set
+    api_key = os.getenv("OPENAI_API_KEY")
+    
+    if api_key:
+        print(f"\n✓ OpenAI API key is configured (length: {len(api_key)} chars)")
+        print("\nYou can run the actual generation functions:")
+        print("  - generate_initialization(): Generate 10 initial network structures")
+        print("  - generate_new_network(seed1, seed2): Generate new network from two seeds")
+    else:
+        print("\n✗ OpenAI API key is NOT configured")
+        print("  Set it with: export OPENAI_API_KEY='your-api-key'")
+    
+    # ========== Test Example Network Structures (Case 3: 3 inputs, output in [-8, -3]) ==========
+    print("\n" + "-" * 60)
+    print("Testing example neural network structures for Case 3...")
+    print("Case 3: 3 inputs (V, T, SoC) -> 1 output (Current in [-8, -3])")
+    print("-" * 60)
+    
+    import torch
+    import torch.nn as nn
+    import pybamm
+    import numpy as np
+    
+    # Example network following the Case 3 template
+    class SeedNetwork1(nn.Module):
+        """MLP with LayerNorm and residual connection"""
+        def __init__(self):
+            super().__init__()
+            self.fc1 = nn.Linear(3, 3)
+            self.ln1 = nn.LayerNorm(3, elementwise_affine=False)
+            self.act = nn.LeakyReLU(0.01)
+            self.fc2 = nn.Linear(3, 3)
+            self.fc3 = nn.Linear(3, 1)
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            h = self.fc1(x)
+            h = self.ln1(h)
+            h = self.act(h)
+            h_res = self.fc2(h) + h  # Residual connection
+            h = self.act(h_res)
+            out = -torch.sigmoid(self.fc3(h)) * 5 - 3  # Output in [-8, -3]
+            return out
+    
+    # Example network 2: Simple MLP
+    class SeedNetwork2(nn.Module):
+        """Simple MLP with Tanh activation"""
+        def __init__(self):
+            super().__init__()
+            self.fc1 = nn.Linear(3, 4)
+            self.ln1 = nn.LayerNorm(4, elementwise_affine=False)
+            self.fc2 = nn.Linear(4, 1)
+        
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            h = torch.tanh(self.ln1(self.fc1(x)))
+            out = -torch.sigmoid(self.fc2(h)) * 5 - 3  # Output in [-8, -3]
+            return out
+    
+    # PyBaMM symbolic function example
+    def nn_in_pybamm_example(X, Ws, bs):
+        """Example PyBaMM symbolic implementation for a simple network"""
+        W1, W2 = [w.tolist() for w in Ws]
+        b1, b2 = [b.tolist() for b in bs]
+        hidden = len(b1)
+        
+        # Layer 1: affine
+        lin1 = []
+        for i in range(hidden):
+            x = pybamm.Scalar(b1[i])
+            for j in range(3):
+                x += pybamm.Scalar(W1[i][j]) * X[j]
+            lin1.append(x)
+        
+        # LayerNorm (no affine)
+        mean1 = sum(lin1) / hidden
+        var1 = sum((x - mean1) ** 2 for x in lin1) / hidden
+        eps = 1e-5
+        inv_std1 = 1 / pybamm.sqrt(var1 + pybamm.Scalar(eps))
+        ln1 = [(x - mean1) * inv_std1 for x in lin1]
+        
+        # Activation (tanh)
+        h1 = [pybamm.tanh(x) for x in ln1]
+        
+        # Output layer
+        lin2 = pybamm.Scalar(b2[0])
+        for j in range(hidden):
+            lin2 += pybamm.Scalar(W2[0][j]) * h1[j]
+        
+        # Sigmoid + scaling to [-8, -3]
+        y = 1 / (1 + pybamm.exp(-lin2))
+        return -pybamm.Scalar(5) * y - 3
+    
+    # Test the networks
+    net1 = SeedNetwork1()
+    net2 = SeedNetwork2()
+    
+    # Count parameters
+    def count_parameters(model):
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    print(f"\nSeed Network 1 (MLP + LayerNorm + Residual):")
+    print(f"  Structure: 3 -> 3 -> 3 -> 1")
+    print(f"  Parameters: {count_parameters(net1)}")
+    print(f"  Constraint check: {'✓ PASS' if count_parameters(net1) < 35 else '✗ FAIL'} (< 35)")
+    
+    print(f"\nSeed Network 2 (Simple MLP + Tanh):")
+    print(f"  Structure: 3 -> 4 -> 1")
+    print(f"  Parameters: {count_parameters(net2)}")
+    print(f"  Constraint check: {'✓ PASS' if count_parameters(net2) < 35 else '✗ FAIL'} (< 35)")
+    
+    # Test forward pass with 3 inputs (simulating V, T, SoC normalized)
+    test_input = torch.tensor([[0.5, 0.3, 0.7]])  # 3 inputs
+    
+    try:
+        output1 = net1(test_input)
+        output2 = net2(test_input)
+        
+        print(f"\nForward pass test:")
+        print(f"  Input (V_norm, T_norm, SoC_norm): [{test_input[0, 0]:.2f}, {test_input[0, 1]:.2f}, {test_input[0, 2]:.2f}]")
+        print(f"  SeedNetwork1 output (Current): {output1.item():.4f} A")
+        print(f"  SeedNetwork2 output (Current): {output2.item():.4f} A")
+        
+        # Verify output range [-8, -3]
+        assert -8 <= output1.item() <= -3, f"Output1 {output1.item():.4f} out of range [-8, -3]!"
+        assert -8 <= output2.item() <= -3, f"Output2 {output2.item():.4f} out of range [-8, -3]!"
+        
+        print(f"\n  Output range check: ✓ PASS (both in [-8, -3])")
+        
+        # Test PyBaMM symbolic function
+        print(f"\nPyBaMM symbolic function test:")
+        Ws = [net2.fc1.weight.detach().numpy(), net2.fc2.weight.detach().numpy()]
+        bs = [net2.fc1.bias.detach().numpy(), net2.fc2.bias.detach().numpy()]
+        X_pybamm = [pybamm.Scalar(0.5), pybamm.Scalar(0.3), pybamm.Scalar(0.7)]
+        
+        pybamm_output = nn_in_pybamm_example(X_pybamm, Ws, bs)
+        print(f"  PyBaMM symbolic output type: {type(pybamm_output).__name__}")
+        print(f"  ✓ PyBaMM symbolic function created successfully")
+        
+        print("\n" + "=" * 60)
+        print("TEST PASSED - Network structures are valid!")
+        print("=" * 60)
+        
+    except Exception as e:
+        print("\n" + "=" * 60)
+        print("TEST FAILED - Error occurred!")
+        print("=" * 60)
+        print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    # ========== Optional: Run actual LLM generation ==========
+    print("\n" + "-" * 60)
+    print("Optional: Run LLM generation")
+    print("-" * 60)
+    
+    run_llm_test = False  # Set to True to test actual LLM generation
+    
+    if run_llm_test and api_key:
+        print("\nRunning generate_new_network() with seed networks...")
+        try:
+            new_code = generate_new_network(seed1_code, seed2_code)
+            print(f"\nGenerated response length: {len(new_code)} chars")
+            print("LLM generation test completed!")
+        except Exception as e:
+            print(f"LLM generation failed: {e}")
+    else:
+        if not api_key:
+            print("\nSkipping LLM test (no API key)")
+        else:
+            print("\nSkipping LLM test (set run_llm_test=True to enable)")
+    
+    print("\n" + "=" * 60)
+    print("Test finished.")
+    print("=" * 60)

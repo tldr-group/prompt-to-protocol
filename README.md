@@ -125,23 +125,6 @@ prompt-to-protocol/
 └── README.md
 ```
 
-## Key Parameters
-
-The SAASBO optimization uses the following default parameters:
-
-- `N_INIT = 30`: Number of initial Sobol sampling points
-- `BATCH_SIZE = 3`: Number of samples per SAASBO batch
-- `N_BATCHES = 60`: Number of SAASBO optimization batches
-- Search space: All neural network parameters bounded in `[-1.0, 1.0]`
-
-## Output
-
-After running optimization, results are saved to the specified folder:
-
-- `optimization_results.csv`: All evaluated parameters and losses
-- `optimal_sim_plot.png`: Visualization of the best simulation result
-- `best_loss.txt`: The best loss value achieved
-
 ## License
 
 See [LICENSE](LICENSE) for details.
